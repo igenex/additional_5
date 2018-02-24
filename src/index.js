@@ -1,60 +1,56 @@
-/*module.exports = */function check(str, bracketsConfig) {
+module.exports =
+function check(str, bracketsConfig) {
   // your solution
   let BracketsChecker = {
-    errors : [],
+    errors: [],
     init(str, bracketConfig) {
       "use strict";
       this.stringArr = str.split("");
       this.bracketModel = bracketConfig;
       this.bracketsObject = {};
+      this.sameBase = [];
+      this.findSameOpenCloseBrackets();
       this.getBracketPositionAndType.cache = Object.create(null);
-      let flatBracketPos = bracketConfig.findIndex(item => {
-        return item.indexOf("|") > - 1;
-      });
-      if(flatBracketPos > -1) {
-        [this.bracketModel[flatBracketPos][0], this.bracketModel[flatBracketPos][1]] = ['|left', '|right'];
-        let flatBracket = true;
-        this.stringArr = this.stringArr.map((item, i, array) => {
-          if(item === "|" && flatBracket) {
-            flatBracket = !flatBracket;
-            return "|left";
-          } else if (item === "|" && !flatBracket) {
-            flatBracket = !flatBracket;
-            return "|right";
-          } else  {
-            return item;
-          }
-        })
-      }
     },
-    getBracketsCount () {
+    findSameOpenCloseBrackets() {
+      "use strict";
+      this.bracketModel.forEach((item, i) => {
+        if (item[0] === item[1]) {
+          this.sameBase.push(item[0]);
+        }
+      });
+    },
+    getBracketsCount() {
       "use strict";
       return this.stringArr.length;
     },
-    getBracketsTypeCount () {
+    getBracketsTypeCount() {
       "use strict";
       return this.bracketModel.length;
     },
-    getBracketsPositionCount () {
+    getBracketsPositionCount() {
       "use strict";
       this.stringArr.forEach(item => {
-        if(!this.bracketsObject[item]) {
+        if (!this.bracketsObject[item]) {
           this.bracketsObject[item] = 0;
         }
         this.bracketsObject[item]++;
       });
     },
-    getBracketPositionAndType (currentBracket) {
+    getBracketPositionAndType(currentBracket) {
       "use strict";
       //if(!this.getBracketPositionAndType.cache) {this.getBracketPositionAndType.cache = Object.create(null);}
       if (!this.getBracketPositionAndType.cache[currentBracket]) {
         let position = Object.create(null);
         this.bracketModel.forEach((array, i) => {
-          if (array.indexOf(currentBracket) > -1) {
-            if (array.indexOf(currentBracket)) {
-
+          let currentBracketIndex = array.indexOf(currentBracket);
+          let isSameBracket = this.sameBase.indexOf(currentBracket);
+          if (currentBracketIndex > -1) {
+            if (!(isSameBracket > -1)) {
+              position.bracketPos = currentBracketIndex ? "close" : "open";
+            } else {
+              position.bracketPos = "openclose";
             }
-            position.bracketPos = array.indexOf(currentBracket) ? "close" : "open";
             position.bracketType = i;
           }
         });
@@ -62,7 +58,7 @@
       }
       return JSON.parse(this.getBracketPositionAndType.cache[currentBracket]);
     },
-    getTypeMap () {
+    getTypeMap() {
       "use strict";
       let typeMap = [];
       this.stringArr.forEach((item) => {
@@ -71,25 +67,25 @@
       console.log(typeMap);
       return typeMap;
     },
-    validateString () {
+    validateString() {
       "use strict";
       let testStringArray = this.stringArr;
-      this.getBracketsPositionCount ();
+      this.getBracketsPositionCount();
 
       //Проверка номер 1
-      if(testStringArray.length % 2 !== 0) {
+      if (testStringArray.length % 2 !== 0) {
         this.failure("Нечетное количество скобок " + testStringArray.length);
         return false;
       }
 
       //Проверка номер 2
-      if(this.getBracketPositionAndType(testStringArray[testStringArray.length-1]).bracketPos === "open") {
+      if (this.getBracketPositionAndType(testStringArray[testStringArray.length - 1]).bracketPos === "open") {
         this.failure("Заканчивается открывающей скобкой");
         return false;
       }
 
       //Проверка номер 3
-      if(this.getBracketPositionAndType(testStringArray[0]).bracketPos === "close") {
+      if (this.getBracketPositionAndType(testStringArray[0]).bracketPos === "close") {
         this.failure("Начинается с открытой скобкой");
         return false;
       }
@@ -103,42 +99,73 @@
         }
       }
       */
+      //========================================================
+      let fullInfoBracketArray = [];
+      for (let i = 0, max = this.stringArr.length; i < max; i++) {
+        let bracketInfo = this.getBracketPositionAndType(this.stringArr[i]);
+        let bracketType = bracketInfo.bracketType,
+          bracketState = bracketInfo.bracketPos;
+
+        if (fullInfoBracketArray.length >= 1) {
+          let prev_item = fullInfoBracketArray.slice(-1);
+          if (prev_item[0][0] === bracketType &&
+            ((prev_item[0][1] === "open" && bracketState === "close") ||
+              (prev_item[0][1] === "openclose" &&  bracketState === "openclose"))) {
+            fullInfoBracketArray.pop();
+            continue;
+          }
+        }
+        if (bracketState === "close" && fullInfoBracketArray.length === 0) {
+          return false;
+        }
+
+        fullInfoBracketArray.push([bracketType, bracketState]);
+      }
+
+      if (fullInfoBracketArray.length > 0) {
+        return false;
+      }
+
+      //=========================================
+
+
       //Проверка номер 6
       let evenOddBracketCount = {};
       this.stringArr.forEach((item, i) => {
         let bracketType = this.getBracketPositionAndType(item).bracketType,
           bracketState = this.getBracketPositionAndType(item).bracketPos;
-        if(!evenOddBracketCount[bracketType+"_"+bracketState]) {
-          evenOddBracketCount[bracketType+"_"+bracketState] = {};
-          evenOddBracketCount[bracketType+"_"+bracketState].count = 0;
-          evenOddBracketCount[bracketType+"_"+bracketState].even = 0;
-          evenOddBracketCount[bracketType+"_"+bracketState].odd = 0;
+        if (!evenOddBracketCount[bracketType + "_" + bracketState]) {
+          evenOddBracketCount[bracketType + "_" + bracketState] = {};
+          evenOddBracketCount[bracketType + "_" + bracketState].count = 0;
+          evenOddBracketCount[bracketType + "_" + bracketState].even = 0;
+          evenOddBracketCount[bracketType + "_" + bracketState].odd = 0;
         }
-        if(!(i % 2)) {
-          evenOddBracketCount[bracketType+"_"+bracketState].odd++;
+        if (!(i % 2)) {
+          evenOddBracketCount[bracketType + "_" + bracketState].odd++;
         } else {
-          evenOddBracketCount[bracketType+"_"+bracketState].even++
+          evenOddBracketCount[bracketType + "_" + bracketState].even++
         }
-        evenOddBracketCount[bracketType+"_"+bracketState].count++;
+        evenOddBracketCount[bracketType + "_" + bracketState].count++;
       });
 
       let typeCount = this.getBracketsTypeCount();
-      for(let i = 0; i < typeCount; i++) {
-        try{
-          if(evenOddBracketCount[i + "_open"].even !== evenOddBracketCount[i + "_close"].odd ||
+      for (let i = 0; i < typeCount; i++) {
+        try {
+          if (evenOddBracketCount[i + "_open"].even !== evenOddBracketCount[i + "_close"].odd ||
             evenOddBracketCount[i + "_open"].odd !== evenOddBracketCount[i + "_close"].even) {
             this.failure("Позиция скобки не верная");
             return false;
-          }} catch (e) {
-            continue;
           }
+        } catch (e) {
+          continue;
+        }
       }
+
       return true;
-      //console.log(evenOddBracketCount);
     },
-    failure (err) {
-      this.errors.push( err );
-      //this.showDialog("Ошибка : " + err );
+    failure(err) {
+      this.errors.push(err);
+      //this.showDialog("Ошибка : " + err);
     },
     showDialog(msg) {
       "use strict";
@@ -148,20 +175,10 @@
 
   let brackets = Object.create(BracketsChecker);
   brackets.init(str, bracketsConfig);
-  brackets.getTypeMap();
-  console.log(brackets.validateString());
-  //console.log("============================")
+  return brackets.validateString();
+
 };
 
 
-const config1 = [['(', ')']];
-const config2 = [['(', ')'], ['[', ']']];
-const config3 = [['(', ')'], ['[', ']'], ['{', '}']];
-const config4 = [['|', '|']];
-const config5 = [['(', ')'], ['|', '|']];
-const config6 = [['1', '2'], ['3', '4'], ['5', '6'], ['7', '7'], ['8', '8']];
-const config7 = [['(', ')'], ['[', ']'], ['{', '}'], ['|', '|']];
 
-check('[]][[]', config3);//, false
-check('[]][[]', config2);//, false
 
