@@ -90,15 +90,6 @@ function check(str, bracketsConfig) {
         return false;
       }
 
-      //Проверка номер 5
-      /*
-      for(let bracket in this.bracketsObject) {
-        if(this.bracketsObject[bracket] % 2) {
-          this.failure("Не хватает скобки");
-          return false;
-        }
-      }
-      */
       //========================================================
       let fullInfoBracketArray = [];
       for (let i = 0, max = this.stringArr.length; i < max; i++) {
@@ -127,39 +118,6 @@ function check(str, bracketsConfig) {
       }
 
       //=========================================
-
-
-      //Проверка номер 6
-      let evenOddBracketCount = {};
-      this.stringArr.forEach((item, i) => {
-        let bracketType = this.getBracketPositionAndType(item).bracketType,
-          bracketState = this.getBracketPositionAndType(item).bracketPos;
-        if (!evenOddBracketCount[bracketType + "_" + bracketState]) {
-          evenOddBracketCount[bracketType + "_" + bracketState] = {};
-          evenOddBracketCount[bracketType + "_" + bracketState].count = 0;
-          evenOddBracketCount[bracketType + "_" + bracketState].even = 0;
-          evenOddBracketCount[bracketType + "_" + bracketState].odd = 0;
-        }
-        if (!(i % 2)) {
-          evenOddBracketCount[bracketType + "_" + bracketState].odd++;
-        } else {
-          evenOddBracketCount[bracketType + "_" + bracketState].even++
-        }
-        evenOddBracketCount[bracketType + "_" + bracketState].count++;
-      });
-
-      let typeCount = this.getBracketsTypeCount();
-      for (let i = 0; i < typeCount; i++) {
-        try {
-          if (evenOddBracketCount[i + "_open"].even !== evenOddBracketCount[i + "_close"].odd ||
-            evenOddBracketCount[i + "_open"].odd !== evenOddBracketCount[i + "_close"].even) {
-            this.failure("Позиция скобки не верная");
-            return false;
-          }
-        } catch (e) {
-          continue;
-        }
-      }
 
       return true;
     },
