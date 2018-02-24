@@ -7,6 +7,29 @@
       this.stringArr = str.split("");
       this.bracketModel = bracketConfig;
       this.bracketsObject = {};
+      this.getBracketPositionAndType.cache = Object.create(null);
+      let flatBracketPos = bracketConfig.findIndex(item => {
+        return item.indexOf("|") > - 1;
+      });
+      if(flatBracketPos > -1) {
+        [this.bracketModel[flatBracketPos][0], this.bracketModel[flatBracketPos][1]] = ['|left', '|right'];
+        let flatBracket = true;
+        this.stringArr = this.stringArr.map((item, i, array) => {
+          if(item === "|" && flatBracket) {
+            flatBracket = !flatBracket;
+            return "|left";
+          } else if (item === "|" && !flatBracket) {
+            flatBracket = !flatBracket;
+            return "|right";
+          } else  {
+            return item;
+          }
+        })
+      }
+    },
+    getBracketsCount () {
+      "use strict";
+      return this.stringArr.length;
     },
     getBracketsTypeCount () {
       "use strict";
@@ -23,17 +46,21 @@
     },
     getBracketPositionAndType (currentBracket) {
       "use strict";
-      let position = Object.create(null);
-      this.bracketModel.forEach((array, i) => {
-        if(array.indexOf(currentBracket) > -1) {
-          if(array.indexOf(currentBracket)) {
+      //if(!this.getBracketPositionAndType.cache) {this.getBracketPositionAndType.cache = Object.create(null);}
+      if (!this.getBracketPositionAndType.cache[currentBracket]) {
+        let position = Object.create(null);
+        this.bracketModel.forEach((array, i) => {
+          if (array.indexOf(currentBracket) > -1) {
+            if (array.indexOf(currentBracket)) {
 
+            }
+            position.bracketPos = array.indexOf(currentBracket) ? "close" : "open";
+            position.bracketType = i;
           }
-          position.bracketPos = array.indexOf(currentBracket) ? "close" : "open";
-          position.bracketType = i;
-        }
-      });
-      return position;
+        });
+        this.getBracketPositionAndType.cache[currentBracket] = JSON.stringify(position);
+      }
+      return JSON.parse(this.getBracketPositionAndType.cache[currentBracket]);
     },
     getTypeMap () {
       "use strict";
@@ -41,6 +68,7 @@
       this.stringArr.forEach((item) => {
         typeMap.push(this.getBracketPositionAndType(item).bracketType);
       });
+      console.log(typeMap);
       return typeMap;
     },
     validateString () {
@@ -96,11 +124,14 @@
 
       let typeCount = this.getBracketsTypeCount();
       for(let i = 0; i < typeCount; i++) {
-        if(evenOddBracketCount[i + "_open"].even !== evenOddBracketCount[i + "_close"].odd ||
-          evenOddBracketCount[i + "_open"].odd !== evenOddBracketCount[i + "_close"].even) {
-          this.failure("Позиция скобки не верная");
-          return false;
-        }
+        try{
+          if(evenOddBracketCount[i + "_open"].even !== evenOddBracketCount[i + "_close"].odd ||
+            evenOddBracketCount[i + "_open"].odd !== evenOddBracketCount[i + "_close"].even) {
+            this.failure("Позиция скобки не верная");
+            return false;
+          }} catch (e) {
+            continue;
+          }
       }
       return true;
       //console.log(evenOddBracketCount);
@@ -117,8 +148,8 @@
 
   let brackets = Object.create(BracketsChecker);
   brackets.init(str, bracketsConfig);
-
-  return brackets.validateString();
+  brackets.getTypeMap();
+  console.log(brackets.validateString());
   //console.log("============================")
 };
 
@@ -131,18 +162,6 @@ const config5 = [['(', ')'], ['|', '|']];
 const config6 = [['1', '2'], ['3', '4'], ['5', '6'], ['7', '7'], ['8', '8']];
 const config7 = [['(', ')'], ['[', ']'], ['{', '}'], ['|', '|']];
 
-check('||', config4);//, true
-/*
-check('|()|', config5);//, true
-check('|(|)', config5);//, false
-check('|()|(||)||', config5);//, true
-check('111115611111111222288888822225577877778775555666677777777776622222', config6);// true
-check('5555512575557777777555566667888888667661133833448441111222233333444442266666', config6);//, false
-check('8888877878887777777888888887777777887887788788887887777777788888888887788888', config6);//, false);
-check('111115611111111156111111112222888888222255778777787755556666777777777766222221111222288888822225577877778775555666677777777776622222', config6);//, true);
 check('[]][[]', config3);//, false
 check('[]][[]', config2);//, false
-check('([[[[(({{{}}}(([](((((((())))||||||))))[[{{|{{}}|}}[[[[]]]]{{{{{}}}}}]]))))]]]]))()', config7);//, false);
-check('([[[[(({{{}}}(([](((((((())))||||||))))[[{{|{{}}|}}[[[[]]]]{{{{{}}}}}]]))))]]]])(())', config7);//, true);
-check('([[[[(({{{}}}(([](((((((())))||||||))))[[{{|{{}}|}}[[[[]]]]{{{{{}}}}}]]))))]]]])((([[[[(({{{}}}(([](((((((())))||||||))))[[{{|{{}}|}}[[[[]]]]{{{{{}}}}}]]))))]]]])))', config7);
-*/
+
